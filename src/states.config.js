@@ -1,0 +1,485 @@
+// ─── OpenQuorum Shared State Configuration ─────────────────────────────────────
+// Single source of truth for VacancyClock + SeatFinder.
+//
+// ADDING A NEW STATE — checklist:
+//   1. Copy STATE_TEMPLATE at the bottom of this file
+//   2. Choose an ID range (e.g. PA = 600s, NY = 700s, TX = 800s …)
+//   3. Fill every field — see field comments in STATE_TEMPLATE
+//   4. Add the new key to STATE_CONFIG below
+//   5. Run both apps locally to verify the new state appears correctly
+//   6. Deploy both apps (push to Git → Netlify/Vercel auto-builds)
+//
+// Board schema (unified for both apps):
+//   VacancyClock uses: totalSeats, vacantSeats, vacantSince, authority, constituent, criticalNote
+//   SeatFinder uses:   mandate, requires, confirmation  (+ vacantSeats → seats, applyUrl from state)
+//   Extra fields on boards are silently ignored by whichever app doesn't need them.
+
+export const STATE_CONFIG = {
+
+  // ─── Maryland ─────────────────────────────────────────────────────────────────
+  MD: {
+    label: "Maryland",
+    region: "Mid-Atlantic",
+    color: "#0F6E56",
+    bg: "#E1F5EE",
+    applyUrl: "https://govappointments.maryland.gov",
+    applyLabel: "Governor's Appointments Office",
+    dataSource: "govappointments.maryland.gov",
+    totalBoardsNote: "600+ boards statewide",
+    contextNote: null,
+    auditNote: null,
+    boards: [
+      { id:1,  name:"Citizens Advisory Board — Regional Institute for Children & Adolescents", domain:"health",
+        totalSeats:8,  vacantSeats:5, vacantSince:"2023-01-15", authority:"Governor (Sec. Health rec.)", constituent:"Youth with behavioral health needs", criticalNote:"Chair vacant · 63% unfilled",
+        mandate:"Advises the Regional Institute for Children & Adolescents on programming, governance, and quality standards for youth with behavioral health needs in Maryland.",
+        requires:["Youth mental health","Health policy","Advocacy","Program evaluation","Research"], confirmation:false },
+      { id:2,  name:"Advisory Board — Developmental Disabilities Administration", domain:"disability",
+        totalSeats:14, vacantSeats:6, vacantSince:"2022-08-20", authority:"Governor", constituent:"Marylanders with developmental disabilities", criticalNote:"Long-term vacancy · 43% unfilled",
+        mandate:"Advises Maryland's Developmental Disabilities Administration on policy, programs, and services for Marylanders with developmental disabilities.",
+        requires:["Disability policy","Federal compliance","Advocacy","Program evaluation","Research"], confirmation:false },
+      { id:3,  name:"Maryland Commission for Women", domain:"equity",
+        totalSeats:15, vacantSeats:6, vacantSince:"2023-04-10", authority:"Governor", constituent:"Maryland women & girls", criticalNote:"Policy-shaping body · 40% unfilled",
+        mandate:"Advises the Governor and General Assembly on issues affecting Maryland women and girls. Conducts research, makes policy recommendations, and monitors gender equity across state programs.",
+        requires:["Gender equity","Advocacy","Research & analysis","Policy","Community engagement"], confirmation:false },
+      { id:4,  name:"State Interagency Council on Homelessness", domain:"housing",
+        totalSeats:18, vacantSeats:5, vacantSince:"2023-09-01", authority:"Governor", constituent:"Unhoused Marylanders", criticalNote:"Funding decisions delayed",
+        mandate:"Coordinates state strategy on homelessness. Oversees federal McKinney-Vento funding, data systems (HMIS), and cross-agency program alignment.",
+        requires:["Federal grants","Data systems","Interagency coordination","Program management","Policy"], confirmation:false },
+      { id:5,  name:"Maryland Commission on African American History & Culture", domain:"equity",
+        totalSeats:12, vacantSeats:4, vacantSince:"2023-10-30", authority:"Governor", constituent:"African American Marylanders", criticalNote:"Heritage policy stalled",
+        mandate:"Advises on the preservation of African American history and culture in Maryland. Reviews policy, distributes grants, and advocates for heritage recognition statewide.",
+        requires:["Equity policy","Research & analysis","Advocacy","Community engagement","Grant management"], confirmation:false },
+      { id:6,  name:"Opioid Response Advisory Council", domain:"health",
+        totalSeats:16, vacantSeats:4, vacantSince:"2023-12-05", authority:"Governor", constituent:"Substance use disorder affected", criticalNote:"Crisis response capacity reduced",
+        mandate:"Advises the Governor on Maryland's opioid and substance use disorder response strategy. Oversees grant-funded programs, interagency coordination, and data-informed intervention models.",
+        requires:["Public health","Grant management","Data analysis","Federal health programs","Program strategy"], confirmation:false },
+      { id:7,  name:"Commission on Public Health — Data & IT Workgroup", domain:"health",
+        totalSeats:22, vacantSeats:6, vacantSince:"2024-03-01", authority:"Governor / Sec. Health", constituent:"All Marylanders · public health system", criticalNote:"Health IT modernization stalled",
+        mandate:"Modernizes Maryland's public health data infrastructure. Oversees statewide health data reporting systems, IT governance, and digital transformation of public health programs.",
+        requires:["Health IT","Data governance","Public health informatics","Federal health systems","AI/technology strategy"], confirmation:false },
+      { id:8,  name:"Environmental Justice Advisory Committee", domain:"environment",
+        totalSeats:12, vacantSeats:4, vacantSince:"2024-05-14", authority:"Sec. Environment", constituent:"Frontline & low-income communities", criticalNote:"EJ permit reviews delayed",
+        mandate:"Advises the Secretary of the Environment on environmental justice policy, permit reviews, and equitable distribution of environmental benefits and burdens across Maryland communities.",
+        requires:["Environmental justice","Policy","Advocacy","Research","Community engagement"], confirmation:false },
+      { id:9,  name:"Maryland Health Care Commission", domain:"health",
+        totalSeats:19, vacantSeats:4, vacantSince:"2024-02-20", authority:"Governor (Senate confirm.)", constituent:"All Marylanders · health coverage", criticalNote:"Rate review capacity reduced",
+        mandate:"Regulates health care facilities, produces statewide health data analytics, oversees Maryland's all-payer model, and guides health information exchange policy and interoperability.",
+        requires:["Health IT","Data analytics","Health policy","Interoperability","Federal health programs"], confirmation:true },
+      { id:10, name:"Maryland State Board of Education", domain:"education",
+        totalSeats:12, vacantSeats:2, vacantSince:"2024-06-01", authority:"Governor (Senate confirm.)", constituent:"Maryland K–12 students & families", criticalNote:"Policy quorum at risk",
+        mandate:"Sets K-12 education policy for Maryland public schools. Establishes academic standards, accountability frameworks, and guides education technology, equity, and workforce pipeline initiatives.",
+        requires:["Education policy","Research & analysis","Technology","Equity","Strategic advisory"], confirmation:true },
+      { id:11, name:"Maryland Hispanic Affairs Commission", domain:"equity",
+        totalSeats:11, vacantSeats:4, vacantSince:"2024-01-08", authority:"Governor", constituent:"Hispanic & Latino Marylanders", criticalNote:"",
+        mandate:"Advises the Governor on programs and policies for Maryland's Hispanic and Latino community. Makes recommendations on language access, economic equity, education, and health services.",
+        requires:["Equity policy","Community engagement","Advocacy","Research","Language access"], confirmation:false },
+      { id:12, name:"Criminal Justice Information Advisory Board", domain:"justice",
+        totalSeats:16, vacantSeats:3, vacantSince:"2023-11-20", authority:"Governor", constituent:"Criminal justice system participants", criticalNote:"Data governance delayed",
+        mandate:"Oversees Maryland's criminal justice data infrastructure, interoperability standards, and privacy policy for statewide information sharing systems.",
+        requires:["Data governance","Interoperability","Information systems","Federal programs","Policy"], confirmation:false },
+      { id:13, name:"Affordable Housing Trust Fund Committee", domain:"housing",
+        totalSeats:13, vacantSeats:3, vacantSince:"2024-04-01", authority:"Governor", constituent:"Low-income housing applicants", criticalNote:"Grant decisions backlogged",
+        mandate:"Oversees Maryland's affordable housing grant programs. Reviews applications, sets funding priorities, and ensures programmatic compliance with federal requirements.",
+        requires:["Grant management","Federal compliance","Program evaluation","Policy","Finance"], confirmation:false },
+      // SeatFinder-sourced boards (not yet in VacancyClock vacancy tracking)
+      { id:14, name:"Governor's AI Subcabinet Advisory Pathway", domain:"health",
+        totalSeats:12, vacantSeats:3, vacantSince:"2024-09-01", authority:"Governor", constituent:"All Marylanders — AI governance", criticalNote:"AI Governance Act body",
+        mandate:"Advises Maryland's AI Governance initiative under the AI Governance Act (2024). Shapes state AI policy, enterprise AI adoption standards, and responsible AI frameworks across all state agencies.",
+        requires:["AI policy & governance","Federal technology leadership","Health IT","Organizational transformation","Strategic advisory"], confirmation:false },
+      { id:15, name:"Governor's Commission on Education Excellence", domain:"education",
+        totalSeats:15, vacantSeats:4, vacantSince:"2024-07-01", authority:"Governor", constituent:"Maryland K–12 students & families", criticalNote:"",
+        mandate:"Advises on K-12 education strategy, workforce pipeline, and technology-enabled learning initiatives for Maryland students.",
+        requires:["Education policy","Program strategy","Technology","Leadership","Research"], confirmation:false },
+    ]
+  },
+
+  // ─── Minnesota ────────────────────────────────────────────────────────────────
+  MN: {
+    label: "Minnesota",
+    region: "Midwest",
+    color: "#185FA5",
+    bg: "#E6F1FB",
+    applyUrl: "https://commissionsandappointments.sos.mn.gov",
+    applyLabel: "MN Secretary of State — Open Positions",
+    dataSource: "sos.mn.gov/boards-commissions",
+    totalBoardsNote: "130+ boards · ~500 seats · ~300 currently vacant",
+    contextNote: null,
+    auditNote: null,
+    boards: [
+      { id:101, name:"Mental Health Legislative Advisory Council", domain:"health",
+        totalSeats:20, vacantSeats:11, vacantSince:"2022-11-01", authority:"Governor", constituent:"Minnesotans with mental illness", criticalNote:"55% unfilled · Chair vacant",
+        mandate:"Advises the Minnesota legislature on mental health policy, program funding, and data-informed behavioral health system improvements. Reports directly to legislative committees.",
+        requires:["Health policy","Data analytics","Federal health programs","Program strategy","Advocacy"], confirmation:false },
+      { id:102, name:"Council on Disability", domain:"disability",
+        totalSeats:13, vacantSeats:6,  vacantSince:"2022-09-15", authority:"Governor", constituent:"Minnesotans with disabilities", criticalNote:"Long-term vacancy · 46% unfilled",
+        mandate:"Advises the state on policies, programs, and services for Minnesotans with disabilities. Advocates for rights, accessibility, and inclusion across all state programs.",
+        requires:["Disability policy","Advocacy","Federal compliance","Program evaluation","Research"], confirmation:false },
+      { id:103, name:"Criminal & Juvenile Justice Information Policy Group", domain:"justice",
+        totalSeats:19, vacantSeats:7,  vacantSince:"2022-12-01", authority:"Legislative + Governor", constituent:"Criminal justice system participants", criticalNote:"Data policy backlogged · 37% unfilled",
+        mandate:"Governs Minnesota's criminal and juvenile justice data infrastructure, interoperability standards, and privacy policy for statewide information sharing systems.",
+        requires:["Data governance","Information systems","Interoperability","Privacy policy","Federal programs"], confirmation:false },
+      { id:104, name:"Water Council", domain:"environment",
+        totalSeats:18, vacantSeats:7,  vacantSince:"2023-02-15", authority:"Governor + Legislative", constituent:"Water users statewide", criticalNote:"39% unfilled · resource policy delayed",
+        mandate:"Coordinates Minnesota's water policy, resource management strategy, and interagency water governance. Advises on statewide water planning and federal Clean Water Act compliance.",
+        requires:["Environmental policy","Water management","Federal compliance","Research","Data systems"], confirmation:false },
+      { id:105, name:"Human Rights Advisory Council", domain:"equity",
+        totalSeats:14, vacantSeats:6,  vacantSince:"2023-02-01", authority:"Commissioner MDHR", constituent:"All Minnesotans · discrimination cases", criticalNote:"43% unfilled",
+        mandate:"Advises the Minnesota Department of Human Rights on discrimination case policy, equity initiatives, and civil rights programs for all Minnesotans.",
+        requires:["Equity policy","Advocacy","Research & analysis","Community engagement","Policy"], confirmation:false },
+      { id:106, name:"Housing Finance Agency Advisory Council", domain:"housing",
+        totalSeats:15, vacantSeats:6,  vacantSince:"2023-05-01", authority:"Governor", constituent:"Low-income housing applicants", criticalNote:"Affordable housing policy delayed",
+        mandate:"Advises on affordable housing finance programs, federal HOME and CDBG funding allocation, and data systems for housing program management.",
+        requires:["Federal grants","Finance","Data systems","Program management","Policy"], confirmation:false },
+      { id:107, name:"Child Protection Training & Certification Board", domain:"health",
+        totalSeats:11, vacantSeats:5,  vacantSince:"2023-07-01", authority:"Commissioner DHS", constituent:"At-risk children statewide", criticalNote:"Training certification backlogged",
+        mandate:"Oversees training and certification standards for child protection workers across Minnesota. Sets professional competencies and reviews program quality for the child welfare workforce.",
+        requires:["Child welfare","Training & development","Program management","Research","Policy"], confirmation:false },
+      { id:108, name:"Board of Medical Practice", domain:"health",
+        totalSeats:16, vacantSeats:4,  vacantSince:"2023-06-01", authority:"Governor", constituent:"Patients & licensed physicians", criticalNote:"Licensing decisions delayed",
+        mandate:"Regulates the licensure and discipline of physicians in Minnesota. Protects patient safety through license review, investigation of complaints, and medical practice standards.",
+        requires:["Health policy","Governance","Research & analysis","Public accountability","Strategic advisory"], confirmation:false },
+      { id:109, name:"Board of Teaching", domain:"education",
+        totalSeats:15, vacantSeats:5,  vacantSince:"2023-08-01", authority:"Governor", constituent:"K–12 teachers & students", criticalNote:"",
+        mandate:"Oversees the licensure and professional development standards for Minnesota's K-12 teachers. Sets educator competencies and reviews teacher preparation program quality.",
+        requires:["Education policy","Research & analysis","Workforce development","Program evaluation","Strategic advisory"], confirmation:false },
+      { id:110, name:"Governor's Workforce Development Board", domain:"education",
+        totalSeats:40, vacantSeats:12, vacantSince:"2023-09-01", authority:"Governor (federal req.)", constituent:"Job seekers & employers statewide", criticalNote:"30% unfilled · federal compliance risk",
+        mandate:"Oversees Minnesota's federal Workforce Innovation and Opportunity Act (WIOA) implementation. Manages statewide workforce data systems, employer engagement strategy, and federally-required program accountability.",
+        requires:["Federal programs","Workforce development","Data systems","Program management","Federal compliance"], confirmation:false },
+      { id:111, name:"Pollution Control Citizens Advisory Committee", domain:"environment",
+        totalSeats:12, vacantSeats:5,  vacantSince:"2023-01-20", authority:"Commissioner MPCA", constituent:"Environmental justice communities", criticalNote:"Permit review capacity reduced",
+        mandate:"Advises Minnesota's Pollution Control Agency on permit policy, environmental justice, and regulatory standards. Provides community perspective on environmental compliance decisions.",
+        requires:["Environmental justice","Policy","Advocacy","Research","Community engagement"], confirmation:false },
+      { id:112, name:"Indian Affairs Council", domain:"equity",
+        totalSeats:12, vacantSeats:4,  vacantSince:"2023-03-01", authority:"Governor / Tribal nations", constituent:"11 Tribal Nations of Minnesota", criticalNote:"Sovereignty consultation gaps",
+        mandate:"Serves as the primary liaison between the 11 Tribal Nations of Minnesota and state government. Addresses sovereignty, treaty rights, and tribal-state consultation on policy decisions.",
+        requires:["Tribal affairs","Sovereignty","Equity policy","Advocacy","Intergovernmental relations"], confirmation:false },
+      { id:113, name:"Rehabilitation Council for the Blind", domain:"disability",
+        totalSeats:13, vacantSeats:5,  vacantSince:"2023-04-01", authority:"Governor", constituent:"Minnesotans who are blind or low vision", criticalNote:"",
+        mandate:"Advises Minnesota State Services for the Blind on vocational rehabilitation programs, independent living policy, and technology access for Minnesotans who are blind or have low vision.",
+        requires:["Disability policy","Rehabilitation","Federal compliance","Advocacy","Program evaluation"], confirmation:false },
+      { id:114, name:"State Demographic Center Advisory Committee", domain:"equity",
+        totalSeats:11, vacantSeats:5,  vacantSince:"2023-11-01", authority:"Governor", constituent:"All Minnesotans · data equity", criticalNote:"Census data policy delayed",
+        mandate:"Guides Minnesota's official population data collection, equity data strategy, and data product development for state planning and policy decisions.",
+        requires:["Data governance","Research","Equity","Analytics","Policy"], confirmation:false },
+    ]
+  },
+
+  // ─── Massachusetts ────────────────────────────────────────────────────────────
+  MA: {
+    label: "Massachusetts",
+    region: "Northeast",
+    color: "#4A2D7A",
+    bg: "#EEEDFE",
+    applyUrl: "https://boards.mass.gov/search",
+    applyLabel: "Governor Healey's Appointments Portal",
+    dataSource: "boards.mass.gov",
+    totalBoardsNote: "700+ boards · 2,341 seats · 248 confirmed vacant (MA State Audit, 2021)",
+    contextNote: null,
+    auditNote: "The Massachusetts State Auditor confirmed in 2021 that 248 of 2,341 board seats had terms that ended without being refilled, and that the Governor's Boards and Commissions Office had not established a process to monitor upcoming vacancies. Source: Office of the State Auditor, mass.gov.",
+    boards: [
+      { id:201, name:"Health Information Technology Council", domain:"health",
+        totalSeats:18, vacantSeats:6, vacantSince:"2023-06-01", authority:"Governor / Sec. HHS", constituent:"Health IT professionals, providers & all MA residents", criticalNote:"Data interoperability standards delayed",
+        mandate:"Advises the Governor on health IT policy, EHR adoption, and interoperability standards across Massachusetts' healthcare system. Oversees statewide health data exchange strategy and digital health innovation.",
+        requires:["Health IT","Data interoperability","EHR / Health Informatics","Federal health programs","Technology strategy"], confirmation:false },
+      { id:202, name:"Digital Accessibility & Equity Governance Board", domain:"health",
+        totalSeats:15, vacantSeats:5, vacantSince:"2024-01-15", authority:"Governor (EO #614)", constituent:"Residents with disabilities · all MA digital users", criticalNote:"EO #614 body · digital equity policy pending",
+        mandate:"Implements Governor Healey's Executive Order #614 on digital equity. Governs accessibility standards for state digital services, technology inclusion policy, and digital access for residents with disabilities.",
+        requires:["Digital equity","Accessibility","Technology modernization","Policy","Disability policy"], confirmation:false },
+      { id:203, name:"Massachusetts Health Policy Commission", domain:"health",
+        totalSeats:11, vacantSeats:2, vacantSince:"2025-07-01", authority:"Governor + AG", constituent:"All Massachusetts residents · health cost control", criticalNote:"Recently restructured · transition seats",
+        mandate:"Independent state agency that monitors healthcare cost growth, sets spending benchmarks, and advises on health system transformation for all Massachusetts residents.",
+        requires:["Health policy","Data analytics","Research & analysis","Strategic advisory","Federal health programs"], confirmation:true },
+      { id:204, name:"MassHealth Care Delivery Advisory Council", domain:"health",
+        totalSeats:20, vacantSeats:5, vacantSince:"2023-09-01", authority:"Sec. Health & Human Services", constituent:"2.2M MassHealth enrollees", criticalNote:"Medicaid delivery reform policy",
+        mandate:"Advises the Secretary of Health & Human Services on MassHealth (Medicaid) program delivery, care coordination models, and health IT systems serving 2.2M enrollees.",
+        requires:["Medicaid policy","Health IT","Program strategy","Data governance","Federal health programs"], confirmation:false },
+      { id:205, name:"Governor's Special Advisory Commission on Disability Policy", domain:"disability",
+        totalSeats:24, vacantSeats:8, vacantSince:"2025-10-14", authority:"Governor (org. recommendations)", constituent:"1.2M Massachusetts residents with disabilities", criticalNote:"Re-established Oct 2025 · filling now",
+        mandate:"Re-established October 2025 — advises Governor Healey on disability policy priorities, program gaps, and systemic barriers for 1.2M Massachusetts residents with disabilities. Currently filling seats.",
+        requires:["Disability policy","Strategic advisory","Research & analysis","Federal compliance","Advocacy"], confirmation:false },
+      { id:206, name:"Behavioral Health Advisory Council", domain:"health",
+        totalSeats:16, vacantSeats:5, vacantSince:"2024-02-01", authority:"Governor / Sec. HHS", constituent:"Residents with mental health & SUD needs", criticalNote:"Behavioral health crisis response policy",
+        mandate:"Advises on Massachusetts' behavioral health system transformation, crisis response capacity, and evidence-based programs for residents with mental health and substance use disorder needs.",
+        requires:["Behavioral health","Health policy","Program strategy","Data analytics","Federal health programs"], confirmation:false },
+      { id:207, name:"Board of Registration in Medicine — Public Member Seats", domain:"health",
+        totalSeats:17, vacantSeats:3, vacantSince:"2024-01-15", authority:"Governor", constituent:"Licensed physicians & patients statewide", criticalNote:"Medical license review capacity",
+        mandate:"Regulates the licensure and discipline of Massachusetts physicians. Public member seats provide accountability and community perspective in licensing decisions affecting patients statewide.",
+        requires:["Health policy","Strategic advisory","Research & analysis","Public accountability","Governance"], confirmation:false },
+      { id:208, name:"Commission on Unlocking Housing Production", domain:"housing",
+        totalSeats:16, vacantSeats:4, vacantSince:"2024-01-29", authority:"Governor (Affordable Homes Act)", constituent:"All Massachusetts residents · housing affordability", criticalNote:"Affordable Homes Act body",
+        mandate:"Created by the 2024 Affordable Homes Act — advises on zoning reform, housing production barriers, and affordable housing strategy for all Massachusetts residents.",
+        requires:["Housing policy","Federal grants","Program strategy","Research & analysis","Policy"], confirmation:false },
+      { id:209, name:"Governor's Advisory Council for Refugees & Immigrants", domain:"equity",
+        totalSeats:20, vacantSeats:6, vacantSince:"2023-05-01", authority:"Governor", constituent:"~750,000 foreign-born Massachusetts residents", criticalNote:"43% unfilled",
+        mandate:"Advises on programs and services for Massachusetts' ~750,000 foreign-born residents. Makes policy recommendations on integration, language access, economic mobility, and refugee resettlement.",
+        requires:["Equity policy","Federal programs","Advocacy","Research & analysis","Community engagement"], confirmation:false },
+      { id:210, name:"Massachusetts Commission on Indian Affairs", domain:"equity",
+        totalSeats:9,  vacantSeats:3, vacantSince:"2023-07-01", authority:"Governor", constituent:"Native American residents of Massachusetts", criticalNote:"Tribal sovereignty & services",
+        mandate:"Advocates for the rights and interests of Native American residents of Massachusetts. Advises state government on tribal sovereignty, cultural preservation, and access to state services.",
+        requires:["Equity policy","Advocacy","Research","Tribal affairs","Community engagement"], confirmation:false },
+      { id:211, name:"Board of Elementary and Secondary Education", domain:"education",
+        totalSeats:11, vacantSeats:2, vacantSince:"2024-03-01", authority:"Governor (Senate confirm.)", constituent:"900,000+ Massachusetts public school students", criticalNote:"State education policy body",
+        mandate:"Sets education policy for 900,000+ Massachusetts public school students. Establishes academic standards, accountability frameworks, and oversees equity and innovation in public education.",
+        requires:["Education policy","Research & analysis","Strategic advisory","Technology","Equity"], confirmation:true },
+      { id:212, name:"Council on Aging Advisory Council", domain:"health",
+        totalSeats:14, vacantSeats:4, vacantSince:"2023-11-01", authority:"Governor", constituent:"1.4M Massachusetts residents 60+", criticalNote:"Elder services policy",
+        mandate:"Advises the Executive Office of Elder Affairs on programs and services for Massachusetts' 1.4M residents 60+. Reviews elder care policy and advocates for aging-in-place, economic security, and health access.",
+        requires:["Elder services","Federal programs","Advocacy","Program evaluation","Research"], confirmation:false },
+      { id:213, name:"Criminal History Systems Board", domain:"justice",
+        totalSeats:13, vacantSeats:3, vacantSince:"2023-12-01", authority:"Governor + AG", constituent:"All Massachusetts residents (CORI system)", criticalNote:"CORI reform policy delayed",
+        mandate:"Governs Massachusetts' CORI (Criminal Offender Record Information) system. Sets data access policy, oversees data governance, and advises on criminal history reform affecting all MA residents.",
+        requires:["Data governance","Policy","Research & analysis","Federal programs","Privacy policy"], confirmation:false },
+      { id:214, name:"State Ethics Commission", domain:"justice",
+        totalSeats:5,  vacantSeats:1, vacantSince:"2025-09-01", authority:"Attorney General", constituent:"All Massachusetts residents", criticalNote:"AG appointment · publicly announced vacancy",
+        mandate:"Enforces Massachusetts' conflict of interest and financial disclosure laws for public officials. AG appointment seat — provides independent oversight of government ethics statewide.",
+        requires:["Ethics & compliance","Governance","Research & analysis","Policy","Strategic advisory"], confirmation:false },
+    ]
+  },
+
+  // ─── Virginia ─────────────────────────────────────────────────────────────────
+  VA: {
+    label: "Virginia",
+    region: "Mid-Atlantic",
+    color: "#8B1A1A",
+    bg: "#FAEAEA",
+    applyUrl: "https://www.commonwealth.virginia.gov/va-government/boards-and-commissions/",
+    applyLabel: "Secretary of the Commonwealth — Boards & Commissions",
+    dataSource: "commonwealth.virginia.gov",
+    totalBoardsNote: "300+ boards · ~900 appointments/year",
+    contextNote: "Governor Abigail Spanberger took office January 17, 2026, inheriting dozens of vacancies from the Youngkin era. Spanberger made 27 board appointments on day one and has been actively filling seats since. A new Democratic administration means a fresh wave of appointment opportunities — many seats are open now that were previously stalled by partisan confirmation conflicts.",
+    auditNote: null,
+    boards: [
+      { id:301, name:"Virginia Health Information Technology Advisory Commission", domain:"health",
+        totalSeats:16, vacantSeats:5, vacantSince:"2024-01-17", authority:"Governor / Sec. Health & Human Resources", constituent:"Health providers & patients statewide", criticalNote:"Health IT interoperability standards",
+        mandate:"Advises the Governor on health information technology policy, interoperability standards, and digital health infrastructure across Virginia's healthcare ecosystem. Oversees statewide health data exchange and IT modernization strategy.",
+        requires:["Health IT","Data interoperability","Health policy","Federal health programs","Technology strategy"], confirmation:false },
+      { id:302, name:"Virginia Board for People with Disabilities", domain:"disability",
+        totalSeats:21, vacantSeats:6, vacantSince:"2023-09-01", authority:"Governor", constituent:"850,000 Virginians with disabilities", criticalNote:"Federal WIOA requirements",
+        mandate:"Advises state government on policies, programs, and services for Virginians with disabilities. Oversees federal Developmental Disabilities Act requirements and advocates for disability rights, accessibility, and inclusion.",
+        requires:["Disability policy","Advocacy","Federal programs","Program evaluation","ADA compliance"], confirmation:false },
+      { id:303, name:"Virginia Opioid Abatement Authority", domain:"health",
+        totalSeats:15, vacantSeats:4, vacantSince:"2024-02-01", authority:"Governor", constituent:"Virginians affected by opioid crisis", criticalNote:"Settlement fund disbursement delayed",
+        mandate:"Administers Virginia's opioid settlement funds. Sets funding priorities, reviews grant applications, and oversees evidence-based programs for substance use disorder prevention, treatment, and recovery statewide.",
+        requires:["Public health","Grant management","Program strategy","Data analysis","Federal health programs"], confirmation:false },
+      { id:304, name:"Virginia Board of Education", domain:"education",
+        totalSeats:9,  vacantSeats:3, vacantSince:"2024-01-17", authority:"Governor (Senate confirm.)", constituent:"1.2M Virginia public school students", criticalNote:"Post-Youngkin transition vacancies",
+        mandate:"Sets K-12 education policy for 1.2 million Virginia public school students. Establishes academic standards, graduation requirements, accountability frameworks, and guides education technology modernization.",
+        requires:["Education policy","Research & analysis","Strategic advisory","Technology","Program strategy"], confirmation:true },
+      { id:305, name:"Virginia Early Childhood Advisory Council", domain:"education",
+        totalSeats:20, vacantSeats:6, vacantSince:"2023-08-01", authority:"Governor", constituent:"Virginia children 0–5 & families", criticalNote:"30% unfilled · federal CCDF compliance",
+        mandate:"Coordinates Virginia's early childhood education and care system. Oversees federal CCDF compliance, advises on PreK policy, and guides data infrastructure for child care quality improvement.",
+        requires:["Early childhood policy","Federal compliance","Data systems","Program management","Research"], confirmation:false },
+      { id:306, name:"Commission on African Americans", domain:"equity",
+        totalSeats:11, vacantSeats:4, vacantSince:"2023-06-01", authority:"Governor + Legislative", constituent:"1.9M African American Virginians", criticalNote:"",
+        mandate:"Advises the Governor and General Assembly on issues affecting African American Virginians. Conducts research, makes policy recommendations, and monitors state programs for equity and inclusion.",
+        requires:["Equity policy","Advocacy","Research & analysis","Community engagement","Policy"], confirmation:false },
+      { id:307, name:"Virginia Housing Advisory Board", domain:"housing",
+        totalSeats:13, vacantSeats:3, vacantSince:"2024-03-01", authority:"Governor", constituent:"Low-income housing applicants statewide", criticalNote:"",
+        mandate:"Advises Virginia Housing on affordable housing finance programs, federal HOME and CDBG fund allocation, and statewide housing data strategy.",
+        requires:["Housing policy","Federal grants","Finance","Data systems","Program management"], confirmation:false },
+      { id:308, name:"Governor's Commission on Veteran Services", domain:"justice",
+        totalSeats:14, vacantSeats:4, vacantSince:"2024-01-17", authority:"Governor", constituent:"750,000+ Virginia veterans", criticalNote:"Transition vacancies — Jan 2026",
+        mandate:"Advises on programs and services for Virginia's 750,000+ veterans. Coordinates across state agencies and federal VA programs to improve veteran access to healthcare, housing, employment, and benefits.",
+        requires:["Federal programs","Advocacy","Program coordination","Data systems","Policy"], confirmation:false },
+      { id:309, name:"Virginia Criminal Justice Services Advisory Committee", domain:"justice",
+        totalSeats:18, vacantSeats:5, vacantSince:"2023-10-01", authority:"Governor", constituent:"Criminal justice system participants", criticalNote:"Data policy delayed",
+        mandate:"Advises the Department of Criminal Justice Services on grant programs, data governance, and evidence-based policy for law enforcement, courts, and corrections across Virginia.",
+        requires:["Data governance","Grant management","Policy","Research & analysis","Federal programs"], confirmation:false },
+      { id:310, name:"Virginia Health Workforce Development Authority", domain:"health",
+        totalSeats:12, vacantSeats:3, vacantSince:"2024-07-01", authority:"Governor", constituent:"Healthcare workforce statewide", criticalNote:"",
+        mandate:"Develops and oversees Virginia's healthcare workforce pipeline. Manages loan forgiveness programs, advises on training policy, and coordinates with federal HRSA workforce initiatives.",
+        requires:["Health policy","Workforce development","Federal programs","Program management","Research"], confirmation:false },
+      { id:311, name:"Statewide Independent Living Council of Virginia", domain:"disability",
+        totalSeats:14, vacantSeats:4, vacantSince:"2024-01-15", authority:"Governor", constituent:"Virginians with disabilities", criticalNote:"",
+        mandate:"Oversees Virginia's Independent Living program under the federal Rehabilitation Act. Sets priorities for the State Plan for Independent Living and advocates for community integration of Virginians with disabilities.",
+        requires:["Disability policy","Federal compliance","Advocacy","Program management","Community engagement"], confirmation:false },
+      { id:312, name:"Virginia Commission on Intergovernmental Cooperation", domain:"equity",
+        totalSeats:12, vacantSeats:4, vacantSince:"2024-04-01", authority:"Governor", constituent:"All Virginians", criticalNote:"Transition vacancies",
+        mandate:"Represents Virginia in multistate and federal-state cooperative policy forums. Advises on intergovernmental fiscal relations, federal legislative impacts, and cross-jurisdictional program coordination.",
+        requires:["Policy","Intergovernmental relations","Research & analysis","Federal programs","Strategic advisory"], confirmation:false },
+    ]
+  },
+
+  // ─── Washington DC ────────────────────────────────────────────────────────────
+  DC: {
+    label: "Washington DC",
+    region: "Mid-Atlantic",
+    color: "#1A3A6B",
+    bg: "#E6EEF8",
+    applyUrl: "https://mota.dc.gov/page/boards-commissions-and-task-forces-district-government",
+    applyLabel: "MOTA — Mayor's Office of Talent & Appointments",
+    dataSource: "mota.dc.gov",
+    totalBoardsNote: "180+ public bodies · all 8 wards",
+    contextNote: "DC's Mayor's Office of Talent and Appointments (MOTA) recruits from all eight wards. Note: Appointees must be registered DC voters. For vacancies not listed online, contact MOTA directly at (202) 727-1372. Boards are organized by Deputy Mayor cluster — search by cluster at mota.dc.gov for the most current vacancies.",
+    auditNote: null,
+    boards: [
+      { id:401, name:"DC Health Information Exchange Policy Board", domain:"health",
+        totalSeats:15, vacantSeats:5, vacantSince:"2023-07-01", authority:"Mayor (MOTA)", constituent:"All DC residents · health data systems", criticalNote:"Health data interoperability stalled",
+        mandate:"Governs the District's health information exchange infrastructure. Sets data policy, privacy standards, and interoperability requirements for DC's health IT ecosystem.",
+        requires:["Health IT","Data interoperability","Health policy","Privacy policy","Federal health programs"], confirmation:false },
+      { id:402, name:"Commission on Mental Health", domain:"health",
+        totalSeats:10, vacantSeats:3, vacantSince:"2024-01-01", authority:"Mayor (MOTA)", constituent:"DC residents with mental health needs", criticalNote:"",
+        mandate:"Advises the Department of Behavioral Health on mental health policy, program standards, and service delivery for DC residents. Reviews programs and makes recommendations on system improvements.",
+        requires:["Behavioral health","Health policy","Program evaluation","Advocacy","Research"], confirmation:false },
+      { id:403, name:"Office on Aging Advisory Committee", domain:"health",
+        totalSeats:14, vacantSeats:4, vacantSince:"2023-08-01", authority:"Mayor (MOTA)", constituent:"DC residents 60+", criticalNote:"Elder services policy",
+        mandate:"Advises the District's Office on Aging on programs and policies for residents 60+. Reviews service delivery, advocates for elder needs, and provides guidance on federal Older Americans Act compliance.",
+        requires:["Elder services","Federal programs","Advocacy","Program evaluation","Policy"], confirmation:false },
+      { id:404, name:"Commission on Persons with Disabilities", domain:"disability",
+        totalSeats:12, vacantSeats:4, vacantSince:"2023-06-01", authority:"Mayor (MOTA)", constituent:"DC residents with disabilities", criticalNote:"",
+        mandate:"Advises DC government on accessibility, disability rights, and inclusion policy. Reviews legislation for disability impact, advocates for ADA enforcement, and monitors DC agency compliance.",
+        requires:["Disability policy","Advocacy","ADA compliance","Policy","Program evaluation"], confirmation:false },
+      { id:405, name:"DC Housing Finance Agency Advisory Board", domain:"housing",
+        totalSeats:11, vacantSeats:3, vacantSince:"2023-09-01", authority:"Mayor (MOTA)", constituent:"Low-income DC housing applicants", criticalNote:"Affordable housing crisis",
+        mandate:"Advises DC HFA on affordable housing finance programs, bond financing, and low-income housing tax credit administration for the District's housing crisis response.",
+        requires:["Housing finance","Federal programs","Policy","Finance","Program management"], confirmation:false },
+      { id:406, name:"DC Workforce Investment Council", domain:"education",
+        totalSeats:22, vacantSeats:7, vacantSince:"2023-10-01", authority:"Mayor (MOTA)", constituent:"DC workforce program participants", criticalNote:"32% unfilled · federal WIOA compliance",
+        mandate:"Oversees DC's federal WIOA implementation. Governs workforce development programs, employer engagement, and data systems for job training and employment services across the District.",
+        requires:["Workforce development","Federal compliance","Data systems","Program management","Strategic advisory"], confirmation:false },
+      { id:407, name:"Commission on Latino Community Development", domain:"equity",
+        totalSeats:11, vacantSeats:4, vacantSince:"2023-07-01", authority:"Mayor (MOTA)", constituent:"~75,000 Hispanic/Latino DC residents", criticalNote:"Last public meeting July 2023",
+        mandate:"Advises DC government on programs and services for the District's Latino community. Conducts research, makes policy recommendations, and monitors equity in DC agency programs.",
+        requires:["Equity policy","Community engagement","Advocacy","Research","Policy"], confirmation:false },
+      { id:408, name:"DC Commission for Women", domain:"equity",
+        totalSeats:15, vacantSeats:5, vacantSince:"2023-08-01", authority:"Mayor (MOTA)", constituent:"350,000+ DC women", criticalNote:"",
+        mandate:"Advises DC government on issues affecting women and girls in the District. Makes policy recommendations on economic security, health, safety, and civic participation.",
+        requires:["Equity policy","Advocacy","Research & analysis","Policy","Community engagement"], confirmation:false },
+      { id:409, name:"Commission on Re-Entry & Returning Citizen Affairs", domain:"justice",
+        totalSeats:13, vacantSeats:4, vacantSince:"2023-05-01", authority:"Mayor (MOTA)", constituent:"Formerly incarcerated DC residents", criticalNote:"Re-entry services policy delayed",
+        mandate:"Advises DC government on re-entry policy, programs, and services for formerly incarcerated residents. Reviews barriers to housing, employment, and civic participation post-incarceration.",
+        requires:["Re-entry policy","Advocacy","Program evaluation","Research","Data systems"], confirmation:false },
+      { id:410, name:"Advisory Board on DC Veterans Affairs", domain:"justice",
+        totalSeats:11, vacantSeats:3, vacantSince:"2023-11-01", authority:"Mayor (MOTA)", constituent:"40,000+ DC area veterans", criticalNote:"",
+        mandate:"Advises the DC Office of Veterans Affairs on programs and services for DC-area veterans. Coordinates with federal VA programs and advocates for veteran access to healthcare, housing, and benefits.",
+        requires:["Federal programs","Veterans services","Advocacy","Program coordination","Policy"], confirmation:false },
+      { id:411, name:"DC Environmental Network Advisory Board", domain:"environment",
+        totalSeats:12, vacantSeats:4, vacantSince:"2024-02-01", authority:"Mayor (MOTA)", constituent:"DC environmental justice communities", criticalNote:"EJ permit policy",
+        mandate:"Advises DC Department of Energy & Environment on environmental justice policy, permit reviews, and sustainability programs in frontline communities across the District.",
+        requires:["Environmental justice","Policy","Advocacy","Research","Program evaluation"], confirmation:false },
+      { id:412, name:"DC State Board of Education", domain:"education",
+        totalSeats:9,  vacantSeats:2, vacantSince:"2024-01-01", authority:"Elected + Mayor", constituent:"92,000 DC public school students", criticalNote:"",
+        mandate:"Sets education standards and policy for DC public schools. Establishes curriculum requirements, graduation standards, and oversees equity in DC's diverse public school system.",
+        requires:["Education policy","Research & analysis","Strategic advisory","Equity","Technology"], confirmation:false },
+    ]
+  },
+
+  // ─── Delaware ─────────────────────────────────────────────────────────────────
+  DE: {
+    label: "Delaware",
+    region: "Mid-Atlantic",
+    color: "#1B5E3C",
+    bg: "#E3F5EC",
+    applyUrl: "https://governor.delaware.gov/boards-and-commissions/",
+    applyLabel: "Governor Meyer's Boards & Commissions Portal",
+    dataSource: "governor.delaware.gov",
+    totalBoardsNote: "~300 boards · apply year-round",
+    contextNote: "Governor Matt Meyer took office January 2025 and has been actively making appointments — multiple confirmation waves in late 2025 and new appointments announced through May 2026. Delaware accepts applications year-round regardless of whether a specific vacancy is currently posted. Apply now and you will be considered as seats open.",
+    auditNote: null,
+    boards: [
+      { id:501, name:"Delaware Health Care Commission", domain:"health",
+        totalSeats:16, vacantSeats:4, vacantSince:"2024-03-01", authority:"Governor", constituent:"All Delawareans · health coverage", criticalNote:"Health spending oversight ($11.3B)",
+        mandate:"Oversees Delaware's healthcare system, regulates health care spending, and guides health policy reform. Advises on insurance markets, health IT, and cost containment strategies.",
+        requires:["Health policy","Data analytics","Health IT","Federal health programs","Strategic advisory"], confirmation:false },
+      { id:502, name:"Delaware Health Information Network Advisory Board", domain:"health",
+        totalSeats:14, vacantSeats:4, vacantSince:"2023-09-01", authority:"Governor", constituent:"All Delawareans · health IT", criticalNote:"Health data exchange policy",
+        mandate:"Governs Delaware's statewide health information exchange. Sets data policy, interoperability standards, and digital health strategy for Delaware's health IT infrastructure.",
+        requires:["Health IT","Data interoperability","Health policy","Federal health programs","Technology strategy"], confirmation:false },
+      { id:503, name:"Delaware Council on Persons with Disabilities", domain:"disability",
+        totalSeats:15, vacantSeats:5, vacantSince:"2023-07-01", authority:"Governor", constituent:"220,000 Delawareans with disabilities", criticalNote:"33% unfilled",
+        mandate:"Advises Delaware government on policies, programs, and services for the state's 220,000+ residents with disabilities. Advocates for accessibility, inclusion, and disability rights statewide.",
+        requires:["Disability policy","Advocacy","Federal compliance","Program evaluation","Research"], confirmation:false },
+      { id:504, name:"Statewide Independent Living Council of Delaware", domain:"disability",
+        totalSeats:12, vacantSeats:4, vacantSince:"2024-01-01", authority:"Governor", constituent:"Delawareans with disabilities", criticalNote:"",
+        mandate:"Oversees Delaware's Independent Living program under the federal Rehabilitation Act. Sets State Plan for Independent Living priorities and advocates for community integration.",
+        requires:["Disability policy","Federal compliance","Advocacy","Program management","Community engagement"], confirmation:false },
+      { id:505, name:"Delaware Commission on Housing", domain:"housing",
+        totalSeats:13, vacantSeats:4, vacantSince:"2024-02-01", authority:"Governor", constituent:"Low-income housing applicants", criticalNote:"",
+        mandate:"Advises on Delaware's housing policy, affordable housing programs, and statewide housing data strategy. Guides federal HOME program allocation and state housing finance decisions.",
+        requires:["Housing policy","Federal grants","Finance","Data systems","Program management"], confirmation:false },
+      { id:506, name:"Delaware State Board of Education", domain:"education",
+        totalSeats:9,  vacantSeats:2, vacantSince:"2024-06-01", authority:"Governor (Senate consent)", constituent:"136,000 Delaware public school students", criticalNote:"",
+        mandate:"Sets K-12 education policy for 136,000 Delaware public school students. Establishes academic standards, accountability frameworks, and guides education technology and equity initiatives.",
+        requires:["Education policy","Research & analysis","Technology","Equity","Strategic advisory"], confirmation:true },
+      { id:507, name:"Governor's Early Childhood Development Committee", domain:"education",
+        totalSeats:16, vacantSeats:5, vacantSince:"2023-09-01", authority:"Governor", constituent:"Delaware children 0–5 & families", criticalNote:"",
+        mandate:"Coordinates Delaware's early childhood education strategy. Advises on PreK policy, federal CCDF compliance, and data systems for child care quality and access improvement.",
+        requires:["Early childhood policy","Federal compliance","Data systems","Research","Program management"], confirmation:false },
+      { id:508, name:"Delaware Commission on African American Affairs", domain:"equity",
+        totalSeats:13, vacantSeats:4, vacantSince:"2023-05-01", authority:"Governor", constituent:"African American Delawareans", criticalNote:"",
+        mandate:"Advises Delaware government on policies affecting African American Delawareans. Researches equity issues, makes policy recommendations, and monitors state programs for racial inclusion.",
+        requires:["Equity policy","Advocacy","Research & analysis","Community engagement","Policy"], confirmation:false },
+      { id:509, name:"Delaware Hispanic Commission", domain:"equity",
+        totalSeats:11, vacantSeats:4, vacantSince:"2023-08-01", authority:"Governor", constituent:"Hispanic/Latino Delawareans", criticalNote:"",
+        mandate:"Advises Delaware government on programs and policies for the Hispanic and Latino community. Makes recommendations on language access, economic equity, education, and health services.",
+        requires:["Equity policy","Community engagement","Advocacy","Research","Language access"], confirmation:false },
+      { id:510, name:"Criminal Justice Council", domain:"justice",
+        totalSeats:18, vacantSeats:5, vacantSince:"2023-12-01", authority:"Governor", constituent:"Criminal justice system participants", criticalNote:"Data governance delayed",
+        mandate:"Coordinates Delaware's criminal justice system reform and data governance. Oversees federal justice grants, manages statewide criminal justice data systems, and advises on evidence-based policy.",
+        requires:["Data governance","Grant management","Federal programs","Research & analysis","Policy"], confirmation:false },
+      { id:511, name:"Natural Areas Advisory Council", domain:"environment",
+        totalSeats:10, vacantSeats:3, vacantSince:"2023-10-01", authority:"Governor (Senate consent)", constituent:"Delaware natural area users & conservationists", criticalNote:"",
+        mandate:"Advises Delaware's Natural Areas Program on land conservation priorities, natural area management, and ecological data systems. Reviews grant applications for land preservation funding.",
+        requires:["Environmental policy","Conservation","Research","Grant management","Data systems"], confirmation:true },
+      { id:512, name:"Violence Against Women Act Advisory Council", domain:"justice",
+        totalSeats:11, vacantSeats:3, vacantSince:"2023-11-01", authority:"Governor", constituent:"Survivors of domestic violence", criticalNote:"",
+        mandate:"Oversees Delaware's VAWA grant program implementation. Advises on services for domestic violence and sexual assault survivors, federal compliance, and data systems for program accountability.",
+        requires:["Federal grants","Program management","Federal compliance","Advocacy","Data systems"], confirmation:false },
+    ]
+  },
+
+};
+
+// ─── Derived exports (used by SeatFinder + VacancyClock) ───────────────────────
+
+// Flat board list — SeatFinder's matching engine iterates this
+export const BOARDS = Object.entries(STATE_CONFIG).flatMap(([stateCode, s]) =>
+  s.boards.map(b => ({ ...b, state: stateCode, applyUrl: s.applyUrl }))
+);
+
+// State UI metadata keyed by code — colors, labels, links
+export const STATE_META = Object.fromEntries(
+  Object.entries(STATE_CONFIG).map(([code, s]) => [code, {
+    label:    s.label,
+    region:   s.region,
+    color:    s.color,
+    bg:       s.bg,
+    applyUrl: s.applyUrl,
+  }])
+);
+
+// Ordered region list for the VacancyClock state picker dropdown
+export const REGION_ORDER = ["Mid-Atlantic", "Northeast", "Midwest", "South", "West"];
+
+// ─── Template for new states ────────────────────────────────────────────────────
+// Copy this block, fill in every field, and add the state code key to STATE_CONFIG above.
+// Board IDs: use stateIndex × 100 + sequence (e.g. PA = 601, 602 … NY = 701, 702 …)
+export const STATE_TEMPLATE = {
+  label:          "",       // Full state/territory name, e.g. "Pennsylvania"
+  region:         "",       // "Mid-Atlantic" | "Northeast" | "Midwest" | "South" | "West"
+  color:          "",       // Primary hex color for the state chip in UI, e.g. "#2B4E8C"
+  bg:             "",       // Light tint hex for the state chip background, e.g. "#E8EEF8"
+  applyUrl:       "",       // Official appointments portal URL
+  applyLabel:     "",       // Human-readable portal name, e.g. "Governor's Appointments Office"
+  dataSource:     "",       // Root domain for data attribution, e.g. "appointments.pa.gov"
+  totalBoardsNote:"",       // Short note on board count, e.g. "500+ boards statewide"
+  contextNote:    null,     // Optional: blue info banner text (new admin, transition notes). null = hidden
+  auditNote:      null,     // Optional: collapsible audit citation text. null = hidden
+  boards: [
+    {
+      id:           0,      // Unique integer — stateIndex*100 + sequence
+      name:         "",     // Official board name
+      domain:       "",     // "health"|"education"|"equity"|"environment"|"housing"|"disability"|"justice"
+      totalSeats:   0,      // Total authorized seats
+      vacantSeats:  0,      // Currently vacant seats
+      vacantSince:  "",     // "YYYY-MM-DD" earliest known vacancy date
+      authority:    "",     // Appointing authority, e.g. "Governor" or "Governor (Senate confirm.)"
+      constituent:  "",     // Short phrase: who this board serves
+      criticalNote: "",     // Optional urgency tag, e.g. "Chair vacant · 50% unfilled". "" = no badge
+      mandate:      "",     // 1–2 sentence board description for SeatFinder AI matching
+      requires:     [],     // ["skill1","skill2",...] expertise array for SeatFinder AI matching
+      confirmation: false,  // true if Senate/legislative confirmation required
+    }
+  ]
+};
