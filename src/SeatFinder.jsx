@@ -386,13 +386,13 @@ function ProfileStep({ profile, setProfile, onMatch, loading }) {
       {/* ── Name + Title ── */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:10 }}>
         <div>
-          <label style={lbl}>Full name</label>
-          <input value={profile.name} onChange={e=>setProfile(p=>({...p,name:e.target.value}))}
+          <label htmlFor="sf-name" style={lbl}>Full name</label>
+          <input id="sf-name" value={profile.name} onChange={e=>setProfile(p=>({...p,name:e.target.value}))}
             placeholder="Your name" style={inp}/>
         </div>
         <div>
-          <label style={lbl}>Professional title</label>
-          <input value={profile.title} onChange={e=>setProfile(p=>({...p,title:e.target.value}))}
+          <label htmlFor="sf-title" style={lbl}>Professional title</label>
+          <input id="sf-title" value={profile.title} onChange={e=>setProfile(p=>({...p,title:e.target.value}))}
             placeholder="e.g. Health IT Consultant" style={inp}/>
         </div>
       </div>
@@ -425,10 +425,13 @@ function ProfileStep({ profile, setProfile, onMatch, loading }) {
 
       {/* ── LinkedIn ── */}
       <div style={{ marginBottom:10 }}>
-        <label style={lbl}>LinkedIn profile URL <span style={{ fontWeight:400, color:"var(--color-text-secondary)" }}>(optional)</span></label>
-        <input value={profile.linkedIn||""} onChange={e=>handleLinkedIn(e.target.value)}
-          placeholder="linkedin.com/in/your-username" style={{ ...inp, borderColor: liError ? "#E24B4A" : undefined }}/>
-        {liError && <p style={{ margin:"4px 0 0", fontSize:11, color:"#E24B4A" }}>{liError}</p>}
+        <label htmlFor="sf-linkedin" style={lbl}>LinkedIn profile URL <span style={{ fontWeight:400, color:"var(--color-text-secondary)" }}>(optional)</span></label>
+        <input id="sf-linkedin" value={profile.linkedIn||""} onChange={e=>handleLinkedIn(e.target.value)}
+          placeholder="linkedin.com/in/your-username"
+          aria-describedby={liError ? "sf-linkedin-error" : undefined}
+          aria-invalid={liError ? "true" : undefined}
+          style={{ ...inp, borderColor: liError ? "#E24B4A" : undefined }}/>
+        {liError && <p id="sf-linkedin-error" role="alert" style={{ margin:"4px 0 0", fontSize:11, color:"#E24B4A" }}>{liError}</p>}
         {profile.linkedIn && !liError && (
           <p style={{ margin:"4px 0 0", fontSize:11, color:"#1D9E75" }}>✓ Valid LinkedIn URL</p>
         )}
@@ -436,8 +439,8 @@ function ProfileStep({ profile, setProfile, onMatch, loading }) {
 
       {/* ── Summary ── */}
       <div style={{ marginBottom:12 }}>
-        <label style={lbl}>Professional background <span style={{ fontWeight:400, color:"var(--color-text-secondary)" }}>(optional — helps personalize your letter)</span></label>
-        <textarea value={profile.summary||""} onChange={e=>setProfile(p=>({...p,summary:e.target.value}))} rows={3}
+        <label htmlFor="sf-summary" style={lbl}>Professional background <span style={{ fontWeight:400, color:"var(--color-text-secondary)" }}>(optional — helps personalize your letter)</span></label>
+        <textarea id="sf-summary" value={profile.summary||""} onChange={e=>setProfile(p=>({...p,summary:e.target.value}))} rows={3}
           placeholder="Brief summary of your experience and areas of focus…"
           style={{ width:"100%", padding:"8px 10px", borderRadius:8, border:"1px solid var(--color-border-secondary)", fontSize:13, background:"var(--color-background-primary)", color:"var(--color-text-primary)", resize:"vertical", boxSizing:"border-box", lineHeight:1.6 }}/>
       </div>
@@ -494,7 +497,8 @@ function ProfileStep({ profile, setProfile, onMatch, loading }) {
 
         {/* Custom skill input */}
         <div style={{ display:"flex", gap:6, alignItems:"center" }}>
-          <input value={customInput} onChange={e=>setCustomInput(e.target.value)}
+          <label htmlFor="sf-custom-skill" style={{ position:"absolute", width:1, height:1, padding:0, margin:-1, overflow:"hidden", clip:"rect(0,0,0,0)", whiteSpace:"nowrap" }}>Add a custom expertise</label>
+          <input id="sf-custom-skill" value={customInput} onChange={e=>setCustomInput(e.target.value)}
             onKeyDown={e=>e.key==="Enter"&&addCustomSkill()}
             placeholder="Add your own expertise (press Enter)"
             style={{ flex:1, padding:"7px 10px", borderRadius:8, border:"1px solid var(--color-border-secondary)", fontSize:12, background:"var(--color-background-primary)", color:"var(--color-text-primary)" }}/>
@@ -772,6 +776,7 @@ export default function SeatFinder() {
 
   return (
     <div style={{ fontFamily:"system-ui,-apple-system,sans-serif", maxWidth:760, margin:"0 auto", padding:"0 0 3rem", color:"var(--color-text-primary)" }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}*:focus-visible{outline:2px solid #1D9E75;outline-offset:2px;}@media(prefers-reduced-motion:reduce){*{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important}}`}</style>
 
       {/* Header */}
       <div style={{ borderBottom:"1px solid var(--color-border-tertiary)", paddingBottom:"1rem", marginBottom:"1.5rem" }}>
@@ -796,8 +801,3 @@ export default function SeatFinder() {
               <p style={{ margin:0, fontSize:13, color:"var(--color-text-secondary)" }}>Drafting your letter of interest…</p>
               <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
             </div>
-          : <LetterStep letter={letter} board={selectedBoard} match={selectedMatch} profile={profile} onBack={()=>setStep(2)}/>
-      )}
-    </div>
-  );
-}
