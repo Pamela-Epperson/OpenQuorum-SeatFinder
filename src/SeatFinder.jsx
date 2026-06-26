@@ -160,17 +160,31 @@ function buildLetter(board, match, profile) {
   const clean = s => (s || "").replace(/^Your /i, "").toLowerCase().replace(/\.$/, "");
   const r1 = clean(match.reasons[0]);
   const r2 = clean(match.reasons[1] || match.reasons[0]);
-  const summaryOpener = (profile.summary || "").split(".").slice(0, 2).join(".").trim();
-  const displayName = profile.isDemo ? "[Your Name]" : (profile.name || "[Your Name]");
+  const summaryText = (profile.summary || "").trim();
+  const summaryFirst = summaryText ? summaryText.split(".")[0].trim() : "";
+  const summaryRest  = summaryText ? summaryText.split(".").slice(1,3).join(".").trim() : "";
+  const displayName  = profile.isDemo ? "[Your Name]" : (profile.name || "[Your Name]");
   const displayTitle = profile.title || "[Your Professional Title]";
+  const yearsPhrase  = profile.experience ? `${profile.experience} years` : "years";
+
+  // Lead with who the person is — never with a generic "I am writing to express" opener
+  const opener = summaryFirst
+    ? `${summaryFirst}. That background is what brings me to the ${board.name} — a board whose work on behalf of ${board.constituent} reflects the kind of civic responsibility I have built my career around.`
+    : `My ${yearsPhrase} of experience in ${topSkills || "public sector leadership"} have been shaped by sustained work with the systems and communities this board serves. I am seeking appointment to the ${board.name} in ${stateName}.`;
+
+  const middleContext = summaryRest
+    ? `${summaryRest}.`
+    : `Throughout my career I have worked at the intersection of policy and practice, with direct exposure to the programs and environments this board oversees.`;
 
   return `Dear Members of the ${board.name} Appointments Committee,
 
-I am writing to express my strong interest in serving on the ${board.name} in ${stateName}. With more than ${profile.experience || "several"} years of professional experience encompassing ${topSkills || "public sector leadership"}, I am deeply committed to public service and confident in my ability to contribute meaningfully to this board's work on behalf of ${board.constituent}.
+${opener}
 
-${summaryOpener}. This background has given me direct exposure to the systems, programs, and policy environments that inform this board's mission. Specifically, my ${r1} — and my ${r2} — both align directly with the board's mandate to ${board.mandate.toLowerCase().replace(/\.$/, "")}. I understand what it takes to move policy into practice, and I bring both the technical depth and the strategic perspective this board requires.
+${middleContext} Specifically, my ${r1} — and my ${r2} — position me to contribute meaningfully to this board's mandate to ${board.mandate.toLowerCase().replace(/\.$/, "")}. I understand the difference between credentialing and contributing, and I am prepared to do the latter.
 
-I welcome the opportunity to bring this experience to the ${board.name} and to serve the residents of ${stateName} in a meaningful civic capacity. I am a committed, collaborative contributor and take seriously the responsibility this appointment carries. Thank you for your consideration — I look forward to the possibility of serving alongside you.
+Board service is a responsibility. I am committed to attending meetings, engaging substantively with the issues before this board, and representing the interests of ${board.constituent} in every decision. I do not take lightly what this seat carries.
+
+Thank you for your consideration. I welcome the opportunity to speak further about my qualifications and my commitment to this work.
 
 Respectfully submitted,
 ${displayName}
@@ -616,40 +630,102 @@ function ResultsStep({ matches, boards, onLetter, onBack }) {
 
 // ─── Letter step ───────────────────────────────────────────────────────────────
 function LetterStep({ letter, board, match, profile, onBack }) {
-  const [copied, setCopied] = useState(false);
+  const [copied,          setCopied]          = useState(false);
+  const [reviewed,        setReviewed]        = useState(false);
+  const [showDisclosure,  setShowDisclosure]  = useState(false);
   const today = new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+  const copyText = `${today}\n\n${letter}`;
+
+  const doCopy = () => {
+    navigator.clipboard?.writeText(copyText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
 
   return (
     <div>
+      {/* Header */}
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"1rem", flexWrap:"wrap", gap:8 }}>
         <div>
           <p style={{ margin:"0 0 2px", fontSize:15, fontWeight:700, color:"var(--color-text-primary)" }}>Letter of Interest</p>
           <p style={{ margin:0, fontSize:12, color:"var(--color-text-secondary)" }}>{board?.name}</p>
         </div>
-        <div style={{ display:"flex", gap:8 }}>
-          <BackBtn onClick={onBack} label="All matches" />
-          <button onClick={() => { navigator.clipboard?.writeText(`${today}\n\n${letter}`); setCopied(true); setTimeout(()=>setCopied(false),2000); }}
-            style={{ padding:"7px 14px", borderRadius:8, border:`1.5px solid ${copied?"#1D9E75":"var(--color-border-secondary)"}`, background:copied?"#E1F5EE":"transparent", color:copied?"#085041":"var(--color-text-primary)", cursor:"pointer", fontSize:13, fontWeight:500 }}>
-            {copied?"Copied!":"Copy letter"}
-          </button>
-        </div>
+        <BackBtn onClick={onBack} label="All matches" />
       </div>
 
-      <div style={{ background:"var(--color-background-primary)", border:"1px solid var(--color-border-tertiary)", borderRadius:12, padding:"2rem 2.5rem", maxWidth:680, margin:"0 auto" }}>
+      {/* ── DRAFT warning ── */}
+      <div style={{ background:"#FEF3CD", border:"1.5px solid #EF9F27", borderRadius:10, padding:"12px 16px", marginBottom:"1rem" }}>
+        <p style={{ margin:"0 0 4px", fontSize:13, fontWeight:700, color:"#633806" }}>⚠ DRAFT — AI-Generated · Not ready to send</p>
+        <p style={{ margin:0, fontSize:12, color:"#633806", lineHeight:1.6 }}>
+          Read every sentence before using this letter. Correct inaccuracies. Replace any phrase that doesn't sound like you. You are responsible for what you submit — this is a starting point, not a finished product.
+        </p>
+      </div>
+
+      {/* ── Letter body ── */}
+      <div style={{ background:"var(--color-background-primary)", border:"1px solid var(--color-border-tertiary)", borderRadius:12, padding:"2rem 2.5rem", maxWidth:680, margin:"0 auto 1rem" }}>
         <p style={{ margin:"0 0 1.5rem", fontSize:13, color:"var(--color-text-secondary)" }}>{today}</p>
         <div style={{ whiteSpace:"pre-wrap", fontSize:13, color:"var(--color-text-primary)", lineHeight:1.85, fontFamily:"Georgia, serif" }}>
           {letter}
         </div>
-        <div style={{ marginTop:"2rem", paddingTop:"1rem", borderTop:"1px solid var(--color-border-tertiary)", display:"flex", gap:10, flexWrap:"wrap" }}>
-          <a href={board?.applyUrl} target="_blank" rel="noreferrer"
-            style={{ padding:"8px 18px", borderRadius:8, background:"#1D9E75", color:"#fff", fontSize:12, fontWeight:700, textDecoration:"none" }}>
-            Submit application ↗
-          </a>
-          <button onClick={() => { navigator.clipboard?.writeText(`${today}\n\n${letter}`); setCopied(true); setTimeout(()=>setCopied(false),2000); }}
-            style={{ padding:"8px 18px", borderRadius:8, border:"1px solid var(--color-border-secondary)", background:"transparent", color:"var(--color-text-primary)", cursor:"pointer", fontSize:12, fontWeight:500 }}>
-            {copied?"Copied!":"Copy to clipboard"}
-          </button>
-        </div>
+      </div>
+
+      {/* ── Application packet note ── */}
+      <div style={{ maxWidth:680, margin:"0 auto 1rem", background:"var(--color-background-secondary)", border:"1px solid var(--color-border-tertiary)", borderRadius:10, padding:"12px 16px" }}>
+        <p style={{ margin:"0 0 5px", fontSize:12, fontWeight:600, color:"var(--color-text-primary)" }}>📋 This letter is one part of your application packet</p>
+        <p style={{ margin:0, fontSize:12, color:"var(--color-text-secondary)", lineHeight:1.65 }}>
+          Most board appointments also require a <strong>resume or CV</strong>, a <strong>short bio</strong>, and the state's <strong>official application form</strong> from the appointing authority. Review the application portal before submitting.
+        </p>
+      </div>
+
+      {/* ── Review gate (checkbox) ── */}
+      <div style={{ maxWidth:680, margin:"0 auto 1rem", padding:"12px 16px", border:`1.5px solid ${reviewed?"#1D9E75":"var(--color-border-secondary)"}`, borderRadius:10, background:reviewed?"#E1F5EE":"var(--color-background-secondary)", transition:"all 0.2s" }}>
+        <label style={{ display:"flex", alignItems:"flex-start", gap:10, cursor:"pointer" }}>
+          <input type="checkbox" checked={reviewed} onChange={e=>setReviewed(e.target.checked)}
+            style={{ marginTop:3, width:15, height:15, cursor:"pointer", accentColor:"#1D9E75", flexShrink:0 }}/>
+          <span style={{ fontSize:13, color:"var(--color-text-primary)", lineHeight:1.5 }}>
+            I've read this letter in full, corrected any inaccuracies, and it accurately represents me and my qualifications.
+          </span>
+        </label>
+      </div>
+
+      {/* ── Action buttons — gated on review ── */}
+      <div style={{ maxWidth:680, margin:"0 auto 1.25rem", display:"flex", gap:10, flexWrap:"wrap", alignItems:"center" }}>
+        <button onClick={doCopy} disabled={!reviewed}
+          style={{ padding:"9px 20px", borderRadius:8, border:"none",
+            background:reviewed?(copied?"#E1F5EE":"#1D9E75"):"var(--color-background-secondary)",
+            color:reviewed?(copied?"#085041":"#fff"):"var(--color-text-secondary)",
+            cursor:reviewed?"pointer":"not-allowed", fontSize:13, fontWeight:600, transition:"all 0.2s" }}>
+          {copied ? "✓ Copied!" : "Copy letter"}
+        </button>
+        <a href={board?.applyUrl} target={reviewed?"_blank":undefined} rel="noreferrer"
+          onClick={e=>{ if(!reviewed) e.preventDefault(); }}
+          style={{ padding:"9px 20px", borderRadius:8, background:reviewed?"transparent":"var(--color-background-secondary)",
+            color:reviewed?"var(--color-text-primary)":"var(--color-text-secondary)", fontSize:13, fontWeight:500,
+            textDecoration:"none", border:`1.5px solid ${reviewed?"var(--color-border-secondary)":"var(--color-border-tertiary)"}`,
+            cursor:reviewed?"pointer":"not-allowed", opacity:reviewed?1:0.5, transition:"all 0.2s" }}>
+          Go to application portal ↗
+        </a>
+        {!reviewed && (
+          <span style={{ fontSize:11, color:"var(--color-text-secondary)", fontStyle:"italic" }}>
+            Check the box above to enable
+          </span>
+        )}
+      </div>
+
+      {/* ── AI / methodology disclosure ── */}
+      <div style={{ maxWidth:680, margin:"0 auto" }}>
+        <button onClick={()=>setShowDisclosure(d=>!d)}
+          style={{ background:"none", border:"none", cursor:"pointer", fontSize:11, color:"var(--color-text-secondary)", padding:0, display:"flex", alignItems:"center", gap:4 }}>
+          <span style={{ fontSize:9 }}>{showDisclosure?"▾":"▸"}</span> How was this letter generated?
+        </button>
+        {showDisclosure && (
+          <div style={{ marginTop:8, padding:"12px 14px", borderRadius:8, background:"var(--color-background-secondary)", border:"1px solid var(--color-border-tertiary)", fontSize:11, color:"var(--color-text-secondary)", lineHeight:1.75 }}>
+            <p style={{ margin:"0 0 5px", fontWeight:600, color:"var(--color-text-primary)", fontSize:12 }}>Generated on your device · No data transmitted</p>
+            <p style={{ margin:"0 0 4px" }}>This letter was built by a template engine running entirely in your browser. No external AI API was called and no data left your device.</p>
+            <p style={{ margin:"0 0 4px" }}><strong>Inputs used:</strong> your professional title, summary text, selected skills, and this board's official mandate and requirements (sourced from {STATE_META[board?.state]?.dataSource || "the state appointments portal"}).</p>
+            <p style={{ margin:0 }}><strong>Limitation:</strong> the engine cannot verify the accuracy of your self-reported information. Read carefully and correct anything that doesn't reflect your actual experience before submitting.</p>
+          </div>
+        )}
       </div>
     </div>
   );
