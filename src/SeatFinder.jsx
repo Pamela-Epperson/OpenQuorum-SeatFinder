@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState, useCallback, useRef } from "react";
-import { BOARDS, STATE_META } from "./states.config";
+import { BOARDS, STATE_META, LIVE_STATES, REQUEST_STATE_CONTACT } from "./states.config";
 
 // ─── Skill options ─────────────────────────────────────────────────────────────
 const SKILL_OPTIONS = [
@@ -145,7 +145,7 @@ function scoreBoards(boards, profile) {
       reasons,
       consideration: board.confirmation
         ? "Requires Senate confirmation — plan for a longer review and approval timeline."
-        : `Apply through ${stateName}'s appointments portal — typically a 2–6 week process.`,
+        : `Apply via ${STATE_META[board.state]?.applyAuthority || `${stateName}'s appointments portal`} — timelines vary by state.`,
       urgency: `${board.vacantSeats} seat${board.vacantSeats !== 1 ? "s" : ""} currently open`,
     };
   });
@@ -153,38 +153,46 @@ function scoreBoards(boards, profile) {
 }
 
 // ─── Letter generator ──────────────────────────────────────────────────────────
+// Single template contract used for EVERY board and state:
+//   date (added at render) · addressed to applyAuthority + board ·
+//   ¶1 interest + credibility · ¶2 specific experience → mandate mapping ·
+//   ¶3 value + commitment + request · professional close with name + title.
+// Board mandate and applyAuthority are pulled dynamically from states.config.js.
+// The letter must render with NO unfilled placeholder brackets — LetterStep
+// collects name/title before enabling Copy/Download.
 function buildLetter(board, match, profile) {
   const stateName = STATE_META[board.state]?.label || board.state;
+  const authority = board.applyAuthority || STATE_META[board.state]?.applyAuthority || `${stateName} appointments office`;
   const allSkills = [...(profile.skills || []), ...(profile.customSkills || [])];
   const topSkills = allSkills.slice(0, 3).join(", ");
-  const clean = s => (s || "").replace(/^Your /i, "").toLowerCase().replace(/\.$/, "");
-  const r1 = clean(match.reasons[0]);
-  const r2 = clean(match.reasons[1] || match.reasons[0]);
-  const summaryText = (profile.summary || "").trim();
+  const clean = s => (s || "").replace(/^Your /i, "").replace(/\.$/, "");
+  const r1 = clean(match?.reasons?.[0]);
+  const r2 = match?.reasons?.[1] ? clean(match.reasons[1]) : "";
+  const summaryText  = (profile.summary || "").trim();
   const summaryFirst = summaryText ? summaryText.split(".")[0].trim() : "";
-  const summaryRest  = summaryText ? summaryText.split(".").slice(1,3).join(".").trim() : "";
-  const displayName  = profile.isDemo ? "[Your Name]" : (profile.name || "[Your Name]");
-  const displayTitle = profile.title || "[Your Professional Title]";
-  const yearsPhrase  = profile.experience ? `${profile.experience} years` : "years";
+  const displayName  = (profile.name || "").trim();
+  const displayTitle = (profile.title || "").trim();
+  const yearsPhrase  = profile.experience ? `${profile.experience} years` : "many years";
 
-  // Lead with who the person is — never with a generic "I am writing to express" opener
-  const opener = summaryFirst
-    ? `${summaryFirst}. That background is what brings me to the ${board.name} — a board whose work on behalf of ${board.constituent} reflects the kind of civic responsibility I have built my career around.`
-    : `My ${yearsPhrase} of experience in ${topSkills || "public sector leadership"} have been shaped by sustained work with the systems and communities this board serves. I am seeking appointment to the ${board.name} in ${stateName}.`;
+  // ¶1 — interest + credibility (leads with who the person is)
+  const p1 = summaryFirst
+    ? `${summaryFirst}. That background is what brings me to the ${board.name} in ${stateName}: a body whose work on behalf of ${board.constituent || "the people it serves"} reflects the kind of public responsibility I have built my career around, and a seat I am formally seeking appointment to.`
+    : `I am ${displayTitle ? `a ${displayTitle}` : "a public sector professional"} with ${yearsPhrase} of experience in ${topSkills || "public service"}, and I am formally seeking appointment to the ${board.name} in ${stateName} — a body whose work on behalf of ${board.constituent || "the people it serves"} reflects the kind of public responsibility I have built my career around.`;
 
-  const middleContext = summaryRest
-    ? `${summaryRest}.`
-    : `Throughout my career I have worked at the intersection of policy and practice, with direct exposure to the programs and environments this board oversees.`;
+  // ¶2 — specific experience mapped to the board's mandate
+  const mandateClause = board.mandate ? board.mandate.replace(/\.$/, "") : `its ${board.domain} mandate`;
+  const p2 = `This board's mandate — ${mandateClause.charAt(0).toLowerCase()}${mandateClause.slice(1)} — maps directly onto my experience. My ${r1 || `background in ${topSkills || "program leadership"}`}${r2 ? `, together with my ${r2.toLowerCase()},` : ""} positions me to contribute from the first meeting rather than after a long ramp-up. I understand the difference between credentialing and contributing, and I am prepared to do the latter.`;
 
-  return `Dear Members of the ${board.name} Appointments Committee,
+  // ¶3 — value + commitment + request
+  const p3 = `Board service is a working commitment: preparing for meetings, engaging substantively with the issues, and representing ${board.constituent || "constituents"} in every decision. I would bring that commitment to this seat, and I respectfully request consideration for appointment. I am glad to provide a resume, references, or any additional materials the ${authority} requires.`;
 
-${opener}
+  return `Dear ${authority} and Members of the ${board.name},
 
-${middleContext} Specifically, my ${r1} — and my ${r2} — position me to contribute meaningfully to this board's mandate to ${board.mandate.toLowerCase().replace(/\.$/, "")}. I understand the difference between credentialing and contributing, and I am prepared to do the latter.
+${p1}
 
-Board service is a responsibility. I am committed to attending meetings, engaging substantively with the issues before this board, and representing the interests of ${board.constituent} in every decision. I do not take lightly what this seat carries.
+${p2}
 
-Thank you for your consideration. I welcome the opportunity to speak further about my qualifications and my commitment to this work.
+${p3}
 
 Respectfully submitted,
 ${displayName}
@@ -263,7 +271,8 @@ function ProfileStep({ profile, setProfile, onMatch, loading }) {
   const [locStatus, setLocStatus]     = useState(""); // "found" | "denied" | ""
   const fileRef = useRef();
 
-  const availableStates = Object.keys(STATE_META);
+  // Live states only — scaffolded states have no verified board data yet
+  const availableStates = LIVE_STATES;
 
   const toggle      = skill => setProfile(p => ({ ...p, skills: p.skills.includes(skill) ? p.skills.filter(s=>s!==skill) : [...p.skills, skill] }));
   const toggleState = s     => setProfile(p => ({ ...p, states: p.states.includes(s) ? p.states.filter(x=>x!==s) : [...p.states, s] }));
@@ -475,6 +484,10 @@ function ProfileStep({ profile, setProfile, onMatch, loading }) {
             );
           })}
         </div>
+        <p style={{ margin:"8px 0 0", fontSize:11, color:"var(--color-text-secondary)" }}>
+          All 50 states + DC are being brought online with verified data.{" "}
+          <a href={REQUEST_STATE_CONTACT} style={{ color:"#1D9E75", fontWeight:500 }}>Request priority for your state →</a>
+        </p>
       </div>
 
       {/* ── Skills ── */}
@@ -618,7 +631,7 @@ function ResultsStep({ matches, boards, onLetter, onBack }) {
                     </button>
                     <a href={board.applyUrl} target="_blank" rel="noreferrer"
                       style={{ fontSize:12, color:"var(--color-text-secondary)", textDecoration:"none" }}>
-                      Apply directly ↗
+                      Apply via {board.applyAuthority || stateMeta.applyAuthority || "state portal"} ↗
                     </a>
                     <span style={{ fontSize:11, color:ts.bar, marginLeft:"auto" }}>{board.vacantSeats} seat{board.vacantSeats>1?"s":""} open</span>
                   </div>
@@ -633,17 +646,40 @@ function ResultsStep({ matches, boards, onLetter, onBack }) {
 }
 
 // ─── Letter step ───────────────────────────────────────────────────────────────
-function LetterStep({ letter, board, match, profile, onBack }) {
+// Renders the standardized LoI. Nothing here is persisted — profile, letter,
+// and any edits live in React state only and vanish on refresh (in-session only).
+function LetterStep({ board, match, profile, setProfile, onBack }) {
   const [copied,          setCopied]          = useState(false);
+  const [downloaded,      setDownloaded]      = useState(false);
   const [reviewed,        setReviewed]        = useState(false);
   const [showDisclosure,  setShowDisclosure]  = useState(false);
   const today = new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+
+  const nameMissing  = !(profile.name || "").trim();
+  const titleMissing = !(profile.title || "").trim();
+  const identityComplete = !nameMissing && !titleMissing;
+
+  // Letter regenerates live as name/title are completed — no placeholder brackets ever ship
+  const letter = buildLetter(board, match, profile);
   const copyText = `${today}\n\n${letter}`;
 
   const doCopy = () => {
     navigator.clipboard?.writeText(copyText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const doDownload = () => {
+    const stateName = STATE_META[board.state]?.label || board.state;
+    const fname = `Letter-of-Interest_${(board.name||"board").replace(/[^\w]+/g,"-").slice(0,60)}_${stateName.replace(/\s+/g,"-")}.txt`;
+    const blob = new Blob([copyText], { type:"text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = fname;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    setDownloaded(true);
+    setTimeout(() => setDownloaded(false), 2500);
   };
 
   return (
@@ -665,12 +701,42 @@ function LetterStep({ letter, board, match, profile, onBack }) {
         </p>
       </div>
 
+      {/* ── Complete your signature (required — no placeholder brackets ever ship) ── */}
+      {!identityComplete && (
+        <div style={{ maxWidth:680, margin:"0 auto 1rem", background:"#FEF3CD", border:"1.5px solid #EF9F27", borderRadius:10, padding:"12px 16px" }}>
+          <p style={{ margin:"0 0 8px", fontSize:12, fontWeight:600, color:"#633806" }}>Add your name and title to complete the letter's signature:</p>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+            <div>
+              <label htmlFor="ls-name" style={{ fontSize:11, color:"#633806", display:"block", marginBottom:3, fontWeight:500 }}>Full name</label>
+              <input id="ls-name" value={profile.name||""} onChange={e=>setProfile(p=>({...p,name:e.target.value,isDemo:false}))}
+                placeholder="Your name" style={{ width:"100%", padding:"7px 10px", borderRadius:8, border:"1px solid #EF9F27", fontSize:13, boxSizing:"border-box" }}/>
+            </div>
+            <div>
+              <label htmlFor="ls-title" style={{ fontSize:11, color:"#633806", display:"block", marginBottom:3, fontWeight:500 }}>Professional title</label>
+              <input id="ls-title" value={profile.title||""} onChange={e=>setProfile(p=>({...p,title:e.target.value}))}
+                placeholder="e.g. Health IT Consultant" style={{ width:"100%", padding:"7px 10px", borderRadius:8, border:"1px solid #EF9F27", fontSize:13, boxSizing:"border-box" }}/>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Letter body ── */}
       <div style={{ background:"var(--color-background-primary)", border:"1px solid var(--color-border-tertiary)", borderRadius:12, padding:"2rem 2.5rem", maxWidth:680, margin:"0 auto 1rem" }}>
         <p style={{ margin:"0 0 1.5rem", fontSize:13, color:"var(--color-text-secondary)" }}>{today}</p>
         <div style={{ whiteSpace:"pre-wrap", fontSize:13, color:"var(--color-text-primary)", lineHeight:1.85, fontFamily:"Georgia, serif" }}>
           {letter}
         </div>
+      </div>
+
+      {/* ── Personalize-this note — makes the letter reusable across seats ── */}
+      <div style={{ maxWidth:680, margin:"0 auto 1rem", background:"#E1F5EE", border:"1px solid #9FE1CB", borderRadius:10, padding:"12px 16px" }}>
+        <p style={{ margin:"0 0 5px", fontSize:12, fontWeight:600, color:"#085041" }}>✏️ Personalize this — and reuse it</p>
+        <p style={{ margin:0, fontSize:12, color:"#085041", lineHeight:1.65 }}>
+          Paragraph 1 is your story, paragraph 2 maps your experience to <em>this board's</em> mandate,
+          paragraph 3 is your commitment. To reuse this letter for another seat, keep paragraphs 1 and 3
+          and rewrite the mandate sentence in paragraph 2 for the new board — SeatFinder fills the correct
+          board name, mandate, and appointing authority automatically for every seat you select.
+        </p>
       </div>
 
       {/* ── Application packet note ── */}
@@ -692,29 +758,40 @@ function LetterStep({ letter, board, match, profile, onBack }) {
         </label>
       </div>
 
-      {/* ── Action buttons — gated on review ── */}
+      {/* ── Action buttons — gated on review + completed signature ── */}
+      {(() => { const ready = reviewed && identityComplete; return (
       <div style={{ maxWidth:680, margin:"0 auto 1.25rem", display:"flex", gap:10, flexWrap:"wrap", alignItems:"center" }}>
-        <button onClick={doCopy} disabled={!reviewed}
+        <button onClick={doCopy} disabled={!ready}
           style={{ padding:"9px 20px", borderRadius:8, border:"none",
-            background:reviewed?(copied?"#E1F5EE":"#1D9E75"):"var(--color-background-secondary)",
-            color:reviewed?(copied?"#085041":"#fff"):"var(--color-text-secondary)",
-            cursor:reviewed?"pointer":"not-allowed", fontSize:13, fontWeight:600, transition:"all 0.2s" }}>
+            background:ready?(copied?"#E1F5EE":"#1D9E75"):"var(--color-background-secondary)",
+            color:ready?(copied?"#085041":"#fff"):"var(--color-text-secondary)",
+            cursor:ready?"pointer":"not-allowed", fontSize:13, fontWeight:600, transition:"all 0.2s" }}>
           {copied ? "✓ Copied!" : "Copy letter"}
         </button>
-        <a href={board?.applyUrl} target={reviewed?"_blank":undefined} rel="noreferrer"
-          onClick={e=>{ if(!reviewed) e.preventDefault(); }}
-          style={{ padding:"9px 20px", borderRadius:8, background:reviewed?"transparent":"var(--color-background-secondary)",
-            color:reviewed?"var(--color-text-primary)":"var(--color-text-secondary)", fontSize:13, fontWeight:500,
-            textDecoration:"none", border:`1.5px solid ${reviewed?"var(--color-border-secondary)":"var(--color-border-tertiary)"}`,
-            cursor:reviewed?"pointer":"not-allowed", opacity:reviewed?1:0.5, transition:"all 0.2s" }}>
-          Go to application portal ↗
+        <button onClick={doDownload} disabled={!ready}
+          style={{ padding:"9px 20px", borderRadius:8,
+            border:`1.5px solid ${ready?"#1D9E75":"var(--color-border-tertiary)"}`,
+            background:downloaded?"#E1F5EE":"transparent",
+            color:ready?(downloaded?"#085041":"#1D9E75"):"var(--color-text-secondary)",
+            cursor:ready?"pointer":"not-allowed", fontSize:13, fontWeight:600, transition:"all 0.2s" }}>
+          {downloaded ? "✓ Downloaded" : "Download .txt"}
+        </button>
+        <a href={board?.applyUrl} target={ready?"_blank":undefined} rel="noreferrer"
+          onClick={e=>{ if(!ready) e.preventDefault(); }}
+          aria-label={`Apply via ${board?.applyAuthority || STATE_META[board?.state]?.applyAuthority || "the state appointments office"}`}
+          style={{ padding:"9px 20px", borderRadius:8, background:ready?"transparent":"var(--color-background-secondary)",
+            color:ready?"var(--color-text-primary)":"var(--color-text-secondary)", fontSize:13, fontWeight:500,
+            textDecoration:"none", border:`1.5px solid ${ready?"var(--color-border-secondary)":"var(--color-border-tertiary)"}`,
+            cursor:ready?"pointer":"not-allowed", opacity:ready?1:0.5, transition:"all 0.2s" }}>
+          Apply via {board?.applyAuthority || STATE_META[board?.state]?.applyAuthority || "state portal"} ↗
         </a>
-        {!reviewed && (
+        {!ready && (
           <span style={{ fontSize:11, color:"var(--color-text-secondary)", fontStyle:"italic" }}>
-            Check the box above to enable
+            {identityComplete ? "Check the box above to enable" : "Add your name and title, then check the box above"}
           </span>
         )}
       </div>
+      ); })()}
 
       {/* ── AI / methodology disclosure ── */}
       <div style={{ maxWidth:680, margin:"0 auto" }}>
@@ -742,7 +819,6 @@ export default function SeatFinder() {
   const [matches,       setMatches]       = useState([]);
   const [selectedBoard, setSelectedBoard] = useState(null);
   const [selectedMatch, setSelectedMatch] = useState(null);
-  const [letter,        setLetter]        = useState("");
   const [loading,       setLoading]       = useState(false);
 
   const filteredBoards = BOARDS.filter(b => profile.states.includes(b.state));
@@ -763,12 +839,9 @@ export default function SeatFinder() {
     setSelectedMatch(match);
     setStep(3);
     setLoading(true);
-    setTimeout(() => {
-      const text = buildLetter(board, match, profile);
-      setLetter(text);
-      setLoading(false);
-    }, 800);
-  }, [profile]);
+    // Letter itself is generated live inside LetterStep (in-session only)
+    setTimeout(() => setLoading(false), 800);
+  }, []);
 
   const handleGoTo = (targetStep) => {
     if (targetStep < step) setStep(targetStep);
@@ -801,3 +874,16 @@ export default function SeatFinder() {
               <p style={{ margin:0, fontSize:13, color:"var(--color-text-secondary)" }}>Drafting your letter of interest…</p>
               <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
             </div>
+          : selectedBoard && (
+              <LetterStep
+                board={selectedBoard}
+                match={selectedMatch}
+                profile={profile}
+                setProfile={setProfile}
+                onBack={()=>setStep(2)}
+              />
+            )
+      )}
+    </div>
+  );
+}
