@@ -1391,7 +1391,7 @@ export const REGION_ORDER = ["Mid-Atlantic", "Northeast", "Midwest", "South", "W
 
 // Where "Request priority for my state" goes until the openquorum domain intake
 // form is live. TODO: point at https://<purchased-domain>/#get-involved after Phase 6 deploy.
-export const REQUEST_STATE_CONTACT = "mailto:pamela.dirman.epperson@gmail.com?subject=OpenQuorum%20—%20bring%20my%20state%20online";
+export const REQUEST_STATE_CONTACT = "https://openquorum.us.com/#get-involved";
 
 // ─── Template for new LIVE states (scraper or manual research) ──────────────────
 export const STATE_TEMPLATE = {
