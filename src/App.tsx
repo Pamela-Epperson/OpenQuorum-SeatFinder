@@ -1,6 +1,12 @@
 // @ts-nocheck
 import { useState, useCallback, useEffect } from "react";
 
+// ── OpenQuorum: prefill from a CivicQuest Pathways deep-link (?state&board&skills). Inert without params. ──
+const OQ_PARAMS = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+const oqStates = () => { const s = OQ_PARAMS.get("state"); return s ? [s] : null; };
+const oqSkills = () => { const s = OQ_PARAMS.get("skills"); return s ? s.split(",").map(x => x.trim()).filter(Boolean).filter(x => SKILL_OPTIONS.includes(x)) : null; };
+const oqSummary = () => { const b = OQ_PARAMS.get("board"); return b ? ("Interested in the " + b + " (via CivicQuest Pathways).") : null; };
+
 // ─── Board data (embedded — self-contained) ────────────────────────────────────
 const BOARDS = [
   // MARYLAND
@@ -119,7 +125,7 @@ function validateLinkedIn(url) {
 function ProfileStep({onMatch,loading}) {
   const [tab,setTab]=useState("sample"); // "sample" | "yours"
   const [profile,setProfile]=useState({
-    name:"", title:"", summary:"", states:["MD"], skills:[], otherSkill:"",
+    name:"", title:"", summary:(oqSummary() || ""), states:(oqStates() || ["MD"]), skills:(oqSkills() || []), otherSkill:"",
     linkedin:"", linkedinValid:true, useLocation:false, experience:""
   });
   const [resumeName,setResumeName]=useState("");
