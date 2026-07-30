@@ -1,5 +1,19 @@
 // @ts-nocheck
 import { useState, useCallback, useRef } from "react";
+
+// ── OpenQuorum: prefill from a CivicQuest Pathways deep-link (?state&board&skills). Inert without params. ──
+const OQ = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+const OQ_HAS = !!(OQ.get("state") || OQ.get("board") || OQ.get("skills"));
+const OQ_PROFILE = () => {
+  const rawSkills = (OQ.get("skills") || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+  const board = OQ.get("board");
+  return {
+    ...BLANK_PROFILE,
+    states: OQ.get("state") ? [OQ.get("state")] : [],
+    skills: SKILL_OPTIONS.filter(o => rawSkills.includes(o.toLowerCase())),
+    summary: board ? ("Interested in the " + board + " (via CivicQuest Pathways).") : "",
+  };
+};
 import { BOARDS, STATE_META, LIVE_STATES, REQUEST_STATE_CONTACT } from "./states.config";
 
 // ─── Skill options ─────────────────────────────────────────────────────────────
@@ -815,7 +829,7 @@ function LetterStep({ board, match, profile, setProfile, onBack }) {
 // ─── Main App ──────────────────────────────────────────────────────────────────
 export default function SeatFinder() {
   const [step,          setStep]          = useState(0);
-  const [profile,       setProfile]       = useState(DEMO_PROFILE);
+  const [profile,       setProfile]       = useState(OQ_HAS ? OQ_PROFILE() : DEMO_PROFILE);
   const [matches,       setMatches]       = useState([]);
   const [selectedBoard, setSelectedBoard] = useState(null);
   const [selectedMatch, setSelectedMatch] = useState(null);
