@@ -499,8 +499,8 @@ function ProfileStep({ profile, setProfile, onMatch, loading }) {
           })}
         </div>
         <p style={{ margin:"8px 0 0", fontSize:11, color:"var(--color-text-secondary)" }}>
-          All 50 states + DC are being brought online with verified data.{" "}
-          <a href={REQUEST_STATE_CONTACT} style={{ color:"#1D9E75", fontWeight:500 }}>Request priority for your state →</a>
+          All 50 states + DC are live with verified data.{" "}
+          <a href={REQUEST_STATE_CONTACT} target="_blank" rel="noopener noreferrer" style={{ color:"#1D9E75", fontWeight:500 }}>Suggest a missing board →</a>
         </p>
       </div>
 
