@@ -2574,8 +2574,8 @@ export const STATE_META = Object.fromEntries(
 export const REGION_ORDER = ["Mid-Atlantic", "Northeast", "Midwest", "South", "West"];
 
 // Where "Request priority for my state" goes until the openquorum domain intake
-// form is live. TODO: point at https://<purchased-domain>/#get-involved after Phase 6 deploy.
-export const REQUEST_STATE_CONTACT = "https://openquorum.us.com/#get-involved";
+// form is live. TODO: point at https://<purchased-domain>/#suggest-a-board after Phase 6 deploy.
+export const REQUEST_STATE_CONTACT = "https://openquorum.us.com/#suggest-a-board";
 
 // ─── Template for new LIVE states (scraper or manual research) ──────────────────
 export const STATE_TEMPLATE = {
